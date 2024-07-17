@@ -32,7 +32,6 @@ import clip
 from torch.utils.data import Dataset, DataLoader
 from transformers import BertTokenizer, BertModel
 
-# Section 1: Helper Functions
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -132,7 +131,6 @@ class VQADataset(Dataset):
     def __len__(self):
         return len(self.df)
 
-# Section 3: Model Definition
 class VQAModel(nn.Module):
     def __init__(self, vocab_size: int, n_answer: int):
         super().__init__()
@@ -150,7 +148,6 @@ class VQAModel(nn.Module):
         x = self.fc(x)
         return x
 
-# Section 4: Training and Evaluation Functions
 def VQA_criterion(pred, answers):
     batch_size = pred.size(0)
     acc = 0
@@ -199,6 +196,7 @@ def eval(model, dataloader, criterion, device):
         simple_acc += (pred.argmax(1) == mode_answer).float().mean().item()
 
     return total_loss / len(dataloader), total_acc / len(dataloader), simple_acc / len(dataloader), time.time() - start
+
 
 #【固定】
 import os
@@ -368,7 +366,8 @@ def main():
 
     model = VQAModel(vocab_size=len(train_dataset.question2idx)+1, n_answer=len(train_dataset.answer2idx)).to(device)
 
-    num_epoch = 39
+    num_epoch = 38#38【0.55876】36【0.55518】
+
     class_weights = torch.ones(len(train_dataset.answer2idx)).to(device)
     if 'unanswerable' in train_dataset.answer2idx:
         class_weights[train_dataset.answer2idx['unanswerable']] = 2.0
@@ -376,7 +375,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
-    start_epoch = 38
+    start_epoch = 0
 
     checkpoint_path = "checkpoint.pth.tar"
     if os.path.exists(checkpoint_path):
